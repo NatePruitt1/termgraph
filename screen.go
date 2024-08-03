@@ -2,6 +2,7 @@ package termgraph
 
 import (
 	"errors"
+  "fmt"
 	tsize "github.com/kopoli/go-terminal-size"
 )
 
@@ -29,14 +30,14 @@ type Screen struct {
 // Takes control of the screen represented by Stdout.
 // Sets up the private cell arrays, and then creates the first "parent"
 // area.
-func (screen *Screen) TakeScreen() (*Screen, error) {
+func TakeScreen() (*Screen, error) {
 	newScreen := new(Screen)
 	size, err := tsize.GetSize()
 	if err != nil {
 		return nil, err
 	} else {
-		screen.areas = make([]*Area, 1)
-		screen.areas[0] = newArea(0, 0, 0, 0, newScreen.GetWidth(), newScreen.GetHeight(), "parent")
+		newScreen.areas = make([]*Area, 1)
+		newScreen.areas[0] = newArea(0, 0, 0, 0, newScreen.GetWidth(), newScreen.GetHeight(), "parent")
 
 		//Create the cell arrays
 		newScreen.cells = make([][]*Cell, size.Width)
@@ -45,12 +46,32 @@ func (screen *Screen) TakeScreen() (*Screen, error) {
 			newScreen.cells[i] = make([]*Cell, size.Height)
 			for j := range newScreen.cells[i] {
 				newScreen.cells[i][j] = newCell(i, j, ' ', "")
-				newScreen.cells[i][j].owners[screen.areas[0]] = true
+				newScreen.cells[i][j].owners[newScreen.areas[0]] = true
 			}
 		}
 
 		return newScreen, nil
 	}
+}
+
+//Update the screen
+//This function first calculates a string, and then prints it to Stdout, which
+//causes the screen to represent all of the changes made to its areas.
+func (screen *Screen) UpdateScreen() {
+  //TODO: Draw an "Edit tree" which creates the most efficient possible
+  //edit to bring the current screen to the new one. Research curses library
+  //approach.
+
+  //For now, delete the screen and update it one by one.
+  ClearScreen()
+
+  for x := range screen.cells {
+    for y := range screen.cells[x] {
+      MoveCursor(x,y)
+      fmt.Printf("%c", screen.cells[x][y].getValue())
+      screen.cells[x][y].updateCell()
+    }
+  }
 }
 
 // ---------- Private Screen Utilities ----------
