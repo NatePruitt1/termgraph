@@ -3,6 +3,7 @@ package termgraph
 import (
 	"errors"
   "fmt"
+  "io"
 	tsize "github.com/kopoli/go-terminal-size"
 )
 
@@ -23,6 +24,8 @@ type Screen struct {
 
 	//A slice of areas, representing all that which should be on the screen. 
 	areas []Area
+  
+  pipe io.Writer
 }
 
 //---------- Public Screen Utilities ----------
@@ -30,7 +33,7 @@ type Screen struct {
 // Takes control of the screen represented by Stdout.
 // Sets up the private cell arrays, and then creates the first "parent"
 // area.
-func TakeScreen() (*Screen, error) {
+func TakeScreen(w io.Writer) (*Screen, error) {
 	newScreen := Screen{}
 	size, err := tsize.GetSize()
 	if err != nil {
@@ -38,6 +41,8 @@ func TakeScreen() (*Screen, error) {
 	} else {
 		newScreen.areas = make([]Area, 1)
     
+    newScreen.pipe = w
+
     //create a new screen struct and copy it into the newScreen array.
     newScreen.areas[0] = newArea(0, 0, 0, 0, size.Width, size.Height, "root")
     newScreen.areas[0].screen = &newScreen
@@ -65,13 +70,13 @@ func (screen *Screen) UpdateScreen() {
   //approach.
 
   //For now, delete the screen and update it one by one.
-  ClearScreen()
+  ClearScreen(screen.pipe)
 
   for x := range screen.cells {
     for y := range screen.cells[x] {
-      MoveCursor(x,y)
+      MoveCursor(x,y, screen.pipe)
       screen.cells[x][y].updateCell()
-      fmt.Printf("%c", screen.cells[x][y].getValue())
+      fmt.Fprintf(screen.pipe, "%c", screen.cells[x][y].getValue())
     }
   }
 }

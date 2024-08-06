@@ -92,6 +92,41 @@ func (parent *Area) NewChild(lX, lY, width, height int, name string) (*Area, err
   return newArea, nil
 }
 
+func (area *Area) PutBorder() {
+  for x := 0; x < area.width; x++ {
+    for y := 0; y < area.height; y++ {
+      //top and bottom border
+      if y == 0 || y == area.height - 1{
+        area.Put(x, y, '─')
+      }
+
+      //left border
+      if x == 0 || x == area.width - 1 {
+        area.Put(x, y, '│')
+      }
+
+      //top left corner
+      if x == 0 && y == 0 {
+        area.Put(x, y, '┌')
+      }
+
+      //top right corner
+      if x == area.width - 1 && y == 0 {
+        area.Put(x, y, '┐')
+      }
+
+      //bottom left corner
+      if x == 0 && y == area.height - 1 {
+        area.Put(x, y, '└')
+      }
+
+      if x == area.width - 1 && y == area.height - 1 {
+        area.Put(x, y, '┘')
+      }
+    }
+  }
+}
+
 //Allocate a new area, assume that this has already been checked and everything
 func newArea(lX, lY, aX, aY, width, height int, name string) Area{
   newArea := Area{}
