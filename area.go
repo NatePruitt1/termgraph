@@ -40,33 +40,26 @@ type Area struct {
 //One of the pivotal interface functions. Sets a cell within the areas newVal
 //value (assuming it is a valid modification).
 //Changes will not be represented until the screen in cleared
-func (area *Area) SetLocation(lX, lY int, c rune) error {
+func (area *Area) Put(lX, lY int, c rune) error {
   aX, aY := area.localToAbsolute(lX, lY)
   err := area.screen.setLocation(aX, aY, c, area)
   return err
 }
 
-//Todo: Move this functionality to the screen
-//Allocate a new area, assume that this has already been checked and everything
-func newArea(lX, lY, aX, aY, width, height int, name string) Area{
-  newArea := Area{}
-  newArea.parent = nil
-  newArea.children = make([]*Area, 0)
-  newArea.localX = lX
-  newArea.localY = lY
-  newArea.absX = aX
-  newArea.absY = aY
-  newArea.width = width
-  newArea.height = height
-  newArea.id = name
-  return newArea
+func (area *Area) Clear() {
+  for x := 0; x < area.width; x++ {
+    for y := 0; y < area.height; y++ {
+      aX, aY := area.localToAbsolute(x, y)
+      area.screen.setLocation(aX, aY, ' ', area)
+    }
+  }
 }
 
 //Creates a child area. The coordinates given are local to the parent area.
 //The parent area is checked for violations first.
 //IF an error is returned, an area will also be returned. This is the area that
 //was offended by the error
-func (parent *Area) makeChild(lX, lY, width, height int, name string) (*Area, error) {
+func (parent *Area) NewChild(lX, lY, width, height int, name string) (*Area, error) {
   cornerX := lX + width
   cornerY := lY + height
 
@@ -97,6 +90,21 @@ func (parent *Area) makeChild(lX, lY, width, height int, name string) (*Area, er
   newArea.parent = parent
   parent.children = append(parent.children, newArea)
   return newArea, nil
+}
+
+//Allocate a new area, assume that this has already been checked and everything
+func newArea(lX, lY, aX, aY, width, height int, name string) Area{
+  newArea := Area{}
+  newArea.parent = nil
+  newArea.children = make([]*Area, 0)
+  newArea.localX = lX
+  newArea.localY = lY
+  newArea.absX = aX
+  newArea.absY = aY
+  newArea.width = width
+  newArea.height = height
+  newArea.id = name
+  return newArea
 }
 
 //Converts the local coordinates x and y to absolute screen coordinates.

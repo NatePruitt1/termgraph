@@ -39,8 +39,8 @@ func TakeScreen() (*Screen, error) {
 		newScreen.areas = make([]Area, 1)
     
     //create a new screen struct and copy it into the newScreen array.
-    newScreen.areas[1] = newArea(0, 0, 0, 0, size.Width, size.Height, "root")
-		
+    newScreen.areas[0] = newArea(0, 0, 0, 0, size.Width, size.Height, "root")
+    newScreen.areas[0].screen = &newScreen
     //Create the cell arrays
 		newScreen.cells = make([][]Cell, size.Width)
 
@@ -70,8 +70,8 @@ func (screen *Screen) UpdateScreen() {
   for x := range screen.cells {
     for y := range screen.cells[x] {
       MoveCursor(x,y)
-      fmt.Printf("%c", screen.cells[x][y].getValue())
       screen.cells[x][y].updateCell()
+      fmt.Printf("%c", screen.cells[x][y].getValue())
     }
   }
 }
