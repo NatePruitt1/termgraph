@@ -46,12 +46,14 @@ func (c *Cell) setCell(r rune, color string) {
   c.newVal = r
 }
 
-func newCell(x, y int, val rune, color string) *Cell {
-  return &Cell{
-    x: x,
-    y: y,
-    currentVal: val,
-    newVal: val,
-    colorCode: color,
-  }
+//TODO: Update this to return Cell instead of *Cell
+func newCell(x, y int, val rune, color string) Cell {
+  cell := Cell{}
+  cell.x = x
+  cell.y = y
+  cell.currentVal = val
+  cell.newVal = val
+  cell.colorCode = color
+  cell.owners = make(map[*Area]bool, 1)
+  return cell
 }

@@ -19,10 +19,10 @@ type Screen struct {
 	//We hold pointers because we want these values to be mutable.
 	//This is to avoid tons of memory allocation when creating new screens.
 	//In the form [x][y]
-	cells [][](*Cell)
+	cells [][]Cell
 
-	//The areas on the screen
-	areas [](*Area)
+	//A slice of areas, representing all that which should be on the screen. 
+	areas []Area
 }
 
 //---------- Public Screen Utilities ----------
@@ -31,26 +31,28 @@ type Screen struct {
 // Sets up the private cell arrays, and then creates the first "parent"
 // area.
 func TakeScreen() (*Screen, error) {
-	newScreen := new(Screen)
+	newScreen := Screen{}
 	size, err := tsize.GetSize()
 	if err != nil {
 		return nil, err
 	} else {
-		newScreen.areas = make([]*Area, 1)
-		newScreen.areas[0] = newArea(0, 0, 0, 0, newScreen.GetWidth(), newScreen.GetHeight(), "parent")
-
-		//Create the cell arrays
-		newScreen.cells = make([][]*Cell, size.Width)
+		newScreen.areas = make([]Area, 1)
+    
+    //create a new screen struct and copy it into the newScreen array.
+    newScreen.areas[1] = newArea(0, 0, 0, 0, size.Width, size.Height, "root")
+		
+    //Create the cell arrays
+		newScreen.cells = make([][]Cell, size.Width)
 
 		for i := range newScreen.cells {
-			newScreen.cells[i] = make([]*Cell, size.Height)
+			newScreen.cells[i] = make([]Cell, size.Height)
 			for j := range newScreen.cells[i] {
 				newScreen.cells[i][j] = newCell(i, j, ' ', "")
-				newScreen.cells[i][j].owners[newScreen.areas[0]] = true
+				newScreen.cells[i][j].owners[&newScreen.areas[0]] = true
 			}
 		}
 
-		return newScreen, nil
+		return &newScreen, nil
 	}
 }
 
@@ -75,18 +77,26 @@ func (screen *Screen) UpdateScreen() {
 }
 
 // ---------- Private Screen Utilities ----------
-func (screen *Screen) addArea(area *Area) {
+//adds area into the areas slice, this is a copy, meaning that the original
+//area variable is no longer useful. 
+func (screen *Screen) newScreenArea(area Area) (*Area) {
 	screen.areas = append(screen.areas, area)
-	for x := area.absX; x < area.width+area.absX; x++ {
+
+  //The new areas will be the last one	
+  newA := &(screen.areas[len(screen.areas) - 1])
+  
+  for x := area.absX; x < area.width+area.absX; x++ {
 		for y := area.absY; y < area.height+area.absY; y++ {
-			screen.cells[x][y].owners[area] = true
+			screen.cells[x][y].owners[newA] = true
 		}
 	}
+
+  return newA
 }
 
 func (screen *Screen) setLocation(aX, aY int, c rune, area *Area) error {
 	//check that the set is within bounds
-	if screen.checkBounds(aX, aY) == false {
+  if screen.checkBounds(aX, aY) == false {
 		return errors.New("Out of bounds cell")
 	}
 
@@ -107,7 +117,7 @@ func (screen *Screen) checkBounds(x, y int) bool {
 
 // ---------- Screen Getters and Setters ----------
 func (screen *Screen) GetWidth() int {
-	return len(screen.cells)
+  return len(screen.cells)
 }
 
 func (screen *Screen) GetHeight() int {
@@ -116,8 +126,25 @@ func (screen *Screen) GetHeight() int {
 
 func (screen *Screen) GetCell(x, y int) (*Cell, error) {
 	if screen.checkBounds(x, y) {
-		return screen.cells[x][y], nil
+		return &screen.cells[x][y], nil
 	} else {
 		return nil, errors.New("Cell out of bounds")
 	}
+}
+
+func (screen *Screen) GetAreaCount() int {
+  return len(screen.areas)
+}
+
+func (screen *Screen) GetArea(i int) *Area {
+  return &screen.areas[i]
+}
+
+func (screen *Screen) GetAreaByName(s string) *Area {
+  for i := range screen.areas {
+    if screen.areas[i].id == s {
+      return &screen.areas[i]
+    }
+  }
+  return nil
 }

@@ -22,7 +22,7 @@ type Area struct {
   //tree structure (like html)
   screen *Screen
   parent *Area;
-  children [](*Area);
+  children []*Area;
 
   localX int
   localY int
@@ -46,9 +46,10 @@ func (area *Area) SetLocation(lX, lY int, c rune) error {
   return err
 }
 
+//Todo: Move this functionality to the screen
 //Allocate a new area, assume that this has already been checked and everything
-func newArea(lX, lY, aX, aY, width, height int, name string) *Area{
-  newArea := new(Area)
+func newArea(lX, lY, aX, aY, width, height int, name string) Area{
+  newArea := Area{}
   newArea.parent = nil
   newArea.children = make([]*Area, 0)
   newArea.localX = lX
@@ -91,11 +92,10 @@ func (parent *Area) makeChild(lX, lY, width, height int, name string) (*Area, er
   
   //Parent and children have not objected, create new area.
   aX, aY := parent.localToAbsolute(lX, lY)
-  newArea := newArea(lX, lY, aX, aY ,width, height, name)
+  newArea := parent.screen.newScreenArea(newArea(lX, lY, aX, aY ,width, height, name))
   newArea.screen = parent.screen
   newArea.parent = parent
   parent.children = append(parent.children, newArea)
-  parent.screen.addArea(newArea)
   return newArea, nil
 }
 
