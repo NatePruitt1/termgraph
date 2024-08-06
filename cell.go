@@ -29,6 +29,10 @@ func (cell *Cell) updateCell() {
   cell.currentVal = cell.newVal
 }
 
+func (cell *Cell) resetCell() {
+  cell.newVal = ' '
+}
+
 //---------- Cell getters and setters --------------------
 func (c *Cell) getLocation() (x, y int) {
   return c.x, c.y

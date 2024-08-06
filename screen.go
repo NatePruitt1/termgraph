@@ -2,9 +2,9 @@ package termgraph
 
 import (
 	"errors"
-  "fmt"
-  "io"
+	"fmt"
 	tsize "github.com/kopoli/go-terminal-size"
+	"io"
 )
 
 // Screen is a struct that represents the terminal screen, and holds the
@@ -22,10 +22,10 @@ type Screen struct {
 	//In the form [x][y]
 	cells [][]Cell
 
-	//A slice of areas, representing all that which should be on the screen. 
+	//A slice of areas, representing all that which should be on the screen.
 	areas []Area
-  
-  pipe io.Writer
+
+	pipe io.Writer
 }
 
 //---------- Public Screen Utilities ----------
@@ -40,13 +40,13 @@ func TakeScreen(w io.Writer) (*Screen, error) {
 		return nil, err
 	} else {
 		newScreen.areas = make([]Area, 1)
-    
-    newScreen.pipe = w
 
-    //create a new screen struct and copy it into the newScreen array.
-    newScreen.areas[0] = newArea(0, 0, 0, 0, size.Width, size.Height, "root")
-    newScreen.areas[0].screen = &newScreen
-    //Create the cell arrays
+		newScreen.pipe = w
+
+		//create a new screen struct and copy it into the newScreen array.
+		newScreen.areas[0] = newArea(0, 0, 0, 0, size.Width, size.Height, "root")
+		newScreen.areas[0].screen = &newScreen
+		//Create the cell arrays
 		newScreen.cells = make([][]Cell, size.Width)
 
 		for i := range newScreen.cells {
@@ -61,47 +61,56 @@ func TakeScreen(w io.Writer) (*Screen, error) {
 	}
 }
 
-//Update the screen
-//This function first calculates a string, and then prints it to Stdout, which
-//causes the screen to represent all of the changes made to its areas.
+// Update the screen
+// This function first calculates a string, and then prints it to Stdout, which
+// causes the screen to represent all of the changes made to its areas.
 func (screen *Screen) UpdateScreen() {
-  //TODO: Draw an "Edit tree" which creates the most efficient possible
-  //edit to bring the current screen to the new one. Research curses library
-  //approach.
+  screen.applyChanges()
+}
 
-  //For now, delete the screen and update it one by one.
-  ClearScreen(screen.pipe)
-
+func (screen *Screen) ResetScreen() {
+	screen.applyChanges()
   for x := range screen.cells {
-    for y := range screen.cells[x] {
-      MoveCursor(x,y, screen.pipe)
-      screen.cells[x][y].updateCell()
-      fmt.Fprintf(screen.pipe, "%c", screen.cells[x][y].getValue())
-    }
-  }
+		for y := range screen.cells[x] {
+			screen.cells[x][y].resetCell()
+		}
+	}
+
 }
 
 // ---------- Private Screen Utilities ----------
-//adds area into the areas slice, this is a copy, meaning that the original
-//area variable is no longer useful. 
-func (screen *Screen) newScreenArea(area Area) (*Area) {
+func (screen *Screen) applyChanges() {
+	ClearScreen(screen.pipe)
+
+	for x := range screen.cells {
+		for y := range screen.cells[x] {
+			MoveCursor(x, y, screen.pipe)
+			screen.cells[x][y].updateCell()
+			fmt.Fprintf(screen.pipe, "%c", screen.cells[x][y].getValue())
+		}
+	}
+}
+
+// adds area into the areas slice, this is a copy, meaning that the original
+// area variable is no longer useful.
+func (screen *Screen) newScreenArea(area Area) *Area {
 	screen.areas = append(screen.areas, area)
 
-  //The new areas will be the last one	
-  newA := &(screen.areas[len(screen.areas) - 1])
-  
-  for x := area.absX; x < area.width+area.absX; x++ {
+	//The new areas will be the last one
+	newA := &(screen.areas[len(screen.areas)-1])
+
+	for x := area.absX; x < area.width+area.absX; x++ {
 		for y := area.absY; y < area.height+area.absY; y++ {
 			screen.cells[x][y].owners[newA] = true
 		}
 	}
 
-  return newA
+	return newA
 }
 
 func (screen *Screen) setLocation(aX, aY int, c rune, area *Area) error {
 	//check that the set is within bounds
-  if screen.checkBounds(aX, aY) == false {
+	if screen.checkBounds(aX, aY) == false {
 		return errors.New("Out of bounds cell")
 	}
 
@@ -122,7 +131,7 @@ func (screen *Screen) checkBounds(x, y int) bool {
 
 // ---------- Screen Getters and Setters ----------
 func (screen *Screen) GetWidth() int {
-  return len(screen.cells)
+	return len(screen.cells)
 }
 
 func (screen *Screen) GetHeight() int {
@@ -138,18 +147,18 @@ func (screen *Screen) GetCell(x, y int) (*Cell, error) {
 }
 
 func (screen *Screen) GetAreaCount() int {
-  return len(screen.areas)
+	return len(screen.areas)
 }
 
 func (screen *Screen) GetArea(i int) *Area {
-  return &screen.areas[i]
+	return &screen.areas[i]
 }
 
 func (screen *Screen) GetAreaByName(s string) *Area {
-  for i := range screen.areas {
-    if screen.areas[i].id == s {
-      return &screen.areas[i]
-    }
-  }
-  return nil
+	for i := range screen.areas {
+		if screen.areas[i].id == s {
+			return &screen.areas[i]
+		}
+	}
+	return nil
 }
