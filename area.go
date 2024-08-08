@@ -92,6 +92,24 @@ func (parent *Area) NewChild(lX, lY, width, height int, name string) (*Area, err
   return newArea, nil
 }
 
+func (area *Area) NewBorderedChild(lX, lY, width, height int, name string) (*Area, error) {
+  //create border area.
+  border, err := area.NewChild(lX, lY, width, height, name + "_border")
+  if err != nil {
+    err2 := errors.New("Could not create border")
+    return nil, errors.Join(err, err2)
+  } else {
+    real_area, err := border.NewChild(lX + 1, lY + 1, width - 1, height - 1, name)
+    if err != nil {
+      err2 := errors.New("Could not create child area")
+      return nil, errors.Join(err, err2)
+    }else {
+      border.PutBorder()
+      return real_area, nil
+    }
+  }
+}
+
 func (area *Area) PutBorder() {
   for x := 0; x < area.width; x++ {
     for y := 0; y < area.height; y++ {
