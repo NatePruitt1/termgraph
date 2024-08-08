@@ -127,6 +127,14 @@ func (area *Area) PutBorder() {
   }
 }
 
+func (area *Area) GetWidth() int {
+  return area.width
+}
+
+func (area *Area) GetHeight() int {
+  return area.height
+}
+
 //Allocate a new area, assume that this has already been checked and everything
 func newArea(lX, lY, aX, aY, width, height int, name string) Area{
   newArea := Area{}
